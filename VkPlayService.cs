@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,12 +17,12 @@ using System.Threading.Tasks;
 ///----------------------------------------------------------------------------
 
 ///----------------------------------------------------------------------------
-///   Module:       Fix for GetRandomViewer, GetNewViewers
+///   Module:       Fix for GetRandomViewer, GetNewViewers, RewardsManager
 ///   Author:       NuboHeimer (https://live.vkplay.ru/nuboheimer)
 ///   Email:        nuboheimer@yandex.ru
 ///----------------------------------------------------------------------------
 
-///   Version:      2.0.1
+///   Version:      2.1.1
 
 public class CPHInline
 {
@@ -45,7 +46,48 @@ public class CPHInline
         return true;
     }
 
-    CPH.SetGlobalVar("vkplay_todays_viewers", new List<string>(), true);
+    public bool OnReward()
+    {
+        if (!args.ContainsKey("channel_name"))
+            return false;
+        string channelName = args["channel_name"].ToString();
+        string rewardId = args["rewardId"].ToString();
+        string rewardState = "On";
+        string token = args["token"].ToString();
+        try
+        {
+            Service.ChangeRewardState(channelName, rewardId, rewardState, token);
+            CPH.LogInfo("[VkPlay reward manager] Reward with id " + rewardId + " enabled");
+        }
+        catch (Exception e)
+        {
+            Logger.Error("Error enabling reward with id " + rewardId, e.Message);
+        }
+
+        return true;
+    }
+
+     public bool OffReward()
+    {
+        if (!args.ContainsKey("channel_name"))
+            return false;
+        string channelName = args["channel_name"].ToString();
+        string rewardId = args["rewardId"].ToString();
+        string rewardState = "Off";
+        string token = args["token"].ToString();
+        try
+        {
+            Service.ChangeRewardState(channelName, rewardId, rewardState, token);
+            CPH.LogInfo("[VkPlay reward manager] Reward with id " + rewardId + " disabled");
+        }
+        catch (Exception e)
+        {
+            Logger.Error("Error disabling reward with id " + rewardId, e.Message);
+        }
+
+        return true;
+    }
+
     public bool GetViewers()
     {
         if (!args.ContainsKey("channel_name"))
@@ -176,6 +218,7 @@ public class VKPlayApiService
 
     private const string ServiceApiHost = "https://api.live.vkplay.ru/v1";
     private const string EndpointTplGetUserData = "/blog/{0}/public_video_stream/chat/user/";
+    private const string EndpointSetRewardState = "/channel/{0}/manage/point/reward/{1}/enabled";
     public VKPlayApiService(HttpClient client, Logger logger)
     {
         Client = client;
@@ -216,6 +259,35 @@ public class VKPlayApiService
         if (userData == null)
             return 0;
         return userData.Count.users + userData.Count.moderators;
+    }
+
+    public void ChangeRewardState(string channelName, string rewardId, string rewardState, string token)
+    {
+        string url = string.Format(ServiceApiHost + EndpointSetRewardState, channelName, rewardId);
+        string stub = "";
+        string jsonString = JsonConvert.SerializeObject(stub);
+
+        try
+        {
+            Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            using HttpContent httpContent = new StringContent(jsonString);
+            if (rewardState == "On")
+            {
+                using HttpResponseMessage response = Client.PutAsync(url, httpContent).GetAwaiter().GetResult();
+                response.EnsureSuccessStatusCode();
+                string responseBody = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            }
+            if (rewardState == "Off")
+            {
+                using HttpResponseMessage response = Client.DeleteAsync(url).GetAwaiter().GetResult();
+                response.EnsureSuccessStatusCode();
+                string responseBody = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            }
+        }
+        catch (HttpRequestException e)
+        {
+            Logger.Error("Error from client", e.Message);
+        }
     }
 
     public class UserInfoResponse
