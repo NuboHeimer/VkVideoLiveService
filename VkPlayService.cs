@@ -1,13 +1,11 @@
-using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text;
+using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 ///----------------------------------------------------------------------------
 ///   Module:       VKPlay Live Service
@@ -22,7 +20,7 @@ using System.Threading.Tasks;
 ///   Email:        nuboheimer@yandex.ru
 ///----------------------------------------------------------------------------
 
-///   Version:      2.1.1
+///   Version:      2.2.1
 
 public class CPHInline
 {
@@ -45,7 +43,6 @@ public class CPHInline
         CPH.SetGlobalVar("vkplay_todays_viewers", new List<string>(), true);
         return true;
     }
-
     public bool OnReward()
     {
         if (!args.ContainsKey("channel_name"))
@@ -209,6 +206,16 @@ public class CPHInline
         CPH.SetGlobalVar("vkplay_todays_viewers", vkplay_todays_viewers, true);
         return true;
     }
+        public bool GetTotalAverageViewrs()
+    {
+    	string channelName = args["channel_name"].ToString();
+        string token = args["token"].ToString();
+        var json = Service.GetAllStatistics(channelName, token);
+        JObject parsedJson = JObject.Parse(json);
+        int totalAverageVkPlayLiveViewers = parsedJson["data"]["analytics"]["total"]["viewersAverage"].Value<int>();
+        CPH.SetArgument("totalAverageVkPlayLiveViewers", totalAverageVkPlayLiveViewers);
+        return true;
+    }
 }
 
 public class VKPlayApiService
@@ -219,15 +226,14 @@ public class VKPlayApiService
     private const string ServiceApiHost = "https://api.live.vkplay.ru/v1";
     private const string EndpointTplGetUserData = "/blog/{0}/public_video_stream/chat/user/";
     private const string EndpointSetRewardState = "/channel/{0}/manage/point/reward/{1}/enabled";
-    private const string EndpointGetSeasonStatistics = "channel/{0}/support_program/season/{1}/statistic/{2}/daily/";
-    private const string EndpointAllStatistics = "channel/{0}/analytics?aggregate_interval=day&date_interval=30day";
+    private const string EndpointGetSeasonStatistics = "/channel/{0}/support_program/season/{1}/statistic/{2}/daily/";
+    private const string EndpointAllStatistics = "/channel/{0}/analytics?aggregate_interval=day&date_interval=30day";
 //    private const string EndpointGetSeasonDaysOnAir = "days_on_air/daily/";
 //    private const string EndpointGetSeasonRaidMembers = "raid_members/daily/";
 //    private const string EndpointGetSeasonViewTimes = "view_time/daily/";
 //    private const string EndpointGetSeasonChPRewardActivate = "cp_reward_activate/daily/";
 //    private const string EndpointGetSeasonLikes = "like/daily/";
 //    private const string EndpointGetSeasonTotalProfit= "total_profit/daily/";
-    private const string EndpointSetRewardState = "/channel/{0}/manage/point/reward/{1}/enabled";
     public VKPlayApiService(HttpClient client, Logger logger)
     {
         Client = client;
@@ -313,41 +319,12 @@ public class VKPlayApiService
             Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
                 using HttpResponseMessage response = Client.GetAsync(url).GetAwaiter().GetResult();
                 response.EnsureSuccessStatusCode();
-                string responseBody = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-                return responseBody;
+                return = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
         }
         catch (HttpRequestException e)
         {
             Logger.Error("Error from client", e.Message);
-        }
-    }
-
-    public void ChangeRewardState(string channelName, string rewardId, string rewardState, string token)
-    {
-        string url = string.Format(ServiceApiHost + EndpointSetRewardState, channelName, rewardId);
-        string stub = "";
-        string jsonString = JsonConvert.SerializeObject(stub);
-
-        try
-        {
-            Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            using HttpContent httpContent = new StringContent(jsonString);
-            if (rewardState == "On")
-            {
-                using HttpResponseMessage response = Client.PutAsync(url, httpContent).GetAwaiter().GetResult();
-                response.EnsureSuccessStatusCode();
-                string responseBody = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-            }
-            if (rewardState == "Off")
-            {
-                using HttpResponseMessage response = Client.DeleteAsync(url).GetAwaiter().GetResult();
-                response.EnsureSuccessStatusCode();
-                string responseBody = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-            }
-        }
-        catch (HttpRequestException e)
-        {
-            Logger.Error("Error from client", e.Message);
+            return("Error from client");
         }
     }
 
