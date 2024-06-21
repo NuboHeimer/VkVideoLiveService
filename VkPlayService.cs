@@ -220,6 +220,7 @@ public class VKPlayApiService
     private const string EndpointTplGetUserData = "/blog/{0}/public_video_stream/chat/user/";
     private const string EndpointSetRewardState = "/channel/{0}/manage/point/reward/{1}/enabled";
     private const string EndpointGetSeasonStatistics = "channel/{0}/support_program/season/{1}/statistic/{2}/daily/";
+    private const string EndpointAllStatistics = "channel/{0}/analytics?aggregate_interval=day&date_interval=30day";
 //    private const string EndpointGetSeasonDaysOnAir = "days_on_air/daily/";
 //    private const string EndpointGetSeasonRaidMembers = "raid_members/daily/";
 //    private const string EndpointGetSeasonViewTimes = "view_time/daily/";
@@ -300,6 +301,24 @@ public class VKPlayApiService
     public string GetSeasonStatistics (string channelName, string seasonNumber, string requestType, string token) {
         string response = "stub";
         return response;
+    }
+
+    public string GetAllStatistics (string channelName, string token)
+    {
+        string url = string.Format(ServiceApiHost + EndpointAllStatistics, channelName);
+
+        try
+        {
+            Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                using HttpResponseMessage response = Client.GetAsync(url).GetAwaiter().GetResult();
+                response.EnsureSuccessStatusCode();
+                string responseBody = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                return responseBody;
+        }
+        catch (HttpRequestException e)
+        {
+            Logger.Error("Error from client", e.Message);
+        }
     }
 
     public class UserInfoResponse
