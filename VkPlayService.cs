@@ -17,7 +17,7 @@ using System.Threading.Tasks;
 ///----------------------------------------------------------------------------
 
 ///----------------------------------------------------------------------------
-///   Module:       Fix for GetRandomViewer, GetNewViewers, RewardsManager, GetSeasonStatistics
+///   Module:       Fix for GetRandomViewer, GetNewViewers, RewardsManager, GetSeasonStatistics, RewardsManager
 ///   Author:       NuboHeimer (https://live.vkplay.ru/nuboheimer)
 ///   Email:        nuboheimer@yandex.ru
 ///----------------------------------------------------------------------------
@@ -227,6 +227,7 @@ public class VKPlayApiService
 //    private const string EndpointGetSeasonChPRewardActivate = "cp_reward_activate/daily/";
 //    private const string EndpointGetSeasonLikes = "like/daily/";
 //    private const string EndpointGetSeasonTotalProfit= "total_profit/daily/";
+    private const string EndpointSetRewardState = "/channel/{0}/manage/point/reward/{1}/enabled";
     public VKPlayApiService(HttpClient client, Logger logger)
     {
         Client = client;
@@ -314,6 +315,35 @@ public class VKPlayApiService
                 response.EnsureSuccessStatusCode();
                 string responseBody = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
                 return responseBody;
+        }
+        catch (HttpRequestException e)
+        {
+            Logger.Error("Error from client", e.Message);
+        }
+    }
+
+    public void ChangeRewardState(string channelName, string rewardId, string rewardState, string token)
+    {
+        string url = string.Format(ServiceApiHost + EndpointSetRewardState, channelName, rewardId);
+        string stub = "";
+        string jsonString = JsonConvert.SerializeObject(stub);
+
+        try
+        {
+            Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            using HttpContent httpContent = new StringContent(jsonString);
+            if (rewardState == "On")
+            {
+                using HttpResponseMessage response = Client.PutAsync(url, httpContent).GetAwaiter().GetResult();
+                response.EnsureSuccessStatusCode();
+                string responseBody = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            }
+            if (rewardState == "Off")
+            {
+                using HttpResponseMessage response = Client.DeleteAsync(url).GetAwaiter().GetResult();
+                response.EnsureSuccessStatusCode();
+                string responseBody = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            }
         }
         catch (HttpRequestException e)
         {
