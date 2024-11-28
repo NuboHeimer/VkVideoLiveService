@@ -1,3 +1,19 @@
+///----------------------------------------------------------------------------
+///   Module:       VKPlay Live Service
+///   Author:       play_code (https://twitch.tv/play_code)
+///   Refactored:   NuboHeimer (https://live.vkvideo.ru/nuboheimer)
+///   Email:        info@play-code.live
+///   WebSite:		https://docs.play-code.ru/minichat
+///----------------------------------------------------------------------------
+
+///----------------------------------------------------------------------------
+///   Module:       GetNewViewers, RewardsManager, GetSeasonStatistics
+///   Author:       NuboHeimer (https://live.vkplay.ru/nuboheimer)
+///   Email:        nuboheimer@yandex.ru
+///----------------------------------------------------------------------------
+
+///   Version:      2.3.0
+
 using System;
 using System.Net;
 using System.Net.Http;
@@ -6,21 +22,6 @@ using System.Collections.Generic;
 using System.Threading;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-
-///----------------------------------------------------------------------------
-///   Module:       VKPlay Live Service
-///   Author:       play_code (https://twitch.tv/play_code)
-///   Email:        info@play-code.live
-///   WebSite:		https://docs.play-code.live/
-///----------------------------------------------------------------------------
-
-///----------------------------------------------------------------------------
-///   Module:       Fix for GetRandomViewer, GetNewViewers, RewardsManager, GetSeasonStatistics, RewardsManager
-///   Author:       NuboHeimer (https://live.vkplay.ru/nuboheimer)
-///   Email:        nuboheimer@yandex.ru
-///----------------------------------------------------------------------------
-
-///   Version:      2.2.1
 
 public class CPHInline
 {
@@ -223,7 +224,7 @@ public class VKPlayApiService
     private HttpClient Client { get; set; }
     private Logger Logger { get; set; }
 
-    private const string ServiceApiHost = "https://api.live.vkplay.ru/v1";
+    private const string ServiceApiHost = "https://api.live.vkvideo.ru/v1";
     private const string EndpointTplGetUserData = "/blog/{0}/public_video_stream/chat/user/";
     private const string EndpointSetRewardState = "/channel/{0}/manage/point/reward/{1}/enabled";
     private const string EndpointGetSeasonStatistics = "/channel/{0}/support_program/season/{1}/statistic/{2}/daily/";
