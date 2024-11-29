@@ -1,5 +1,5 @@
 ///----------------------------------------------------------------------------
-///   Module:       VKPlay Live Service
+///   Module:       VK Video Live Service
 ///   Author:       play_code (https://twitch.tv/play_code)
 ///   Refactored:   NuboHeimer (https://live.vkvideo.ru/nuboheimer)
 ///   Email:        info@play-code.live
@@ -8,11 +8,11 @@
  
 ///----------------------------------------------------------------------------
 ///   Module:       GetNewViewers, RewardsManager, GetSeasonStatistics
-///   Author:       NuboHeimer (https://live.vkplay.ru/nuboheimer)
+///   Author:       NuboHeimer (https://live.vkvideo.ru/nuboheimer)
 ///   Email:        nuboheimer@yandex.ru
 ///----------------------------------------------------------------------------
  
-///   Version:      2.3.0
+///   Version:      3.0.0
 using System;
 using System.Net;
 using System.Net.Http;
@@ -26,21 +26,21 @@ public class CPHInline
 {
     private readonly HttpClient Client = new();
     private Logger Logger;
-    private VKPlayApiService Service;
+    private VKVideoLiveApiService Service;
     public void Init()
     {
-        Logger = new Logger(CPH, "-- VKPlay Service:");
-        Service = new VKPlayApiService(Client, Logger);
-        if (CPH.GetGlobalVar<List<string>>("vkplay_todays_viewers", true) == null)
+        Logger = new Logger(CPH, "-- VKVideoLive Service:");
+        Service = new VKVideoLiveApiService(Client, Logger);
+        if (CPH.GetGlobalVar<List<string>>("vkvideolive_todays_viewers", true) == null)
         {
-            CPH.SetGlobalVar("vkplay_todays_viewers", new List<string>(), true);
-            CPH.LogInfo("Создана глобальная переменная vkplay_todays_viewers");
+            CPH.SetGlobalVar("vkvideolive_todays_viewers", new List<string>(), true);
+            CPH.LogInfo("Создана глобальная переменная vkvideolive_todays_viewers");
         }
     }
 
     public bool ClearTodaysViewers()
     {
-        CPH.SetGlobalVar("vkplay_todays_viewers", new List<string>(), true);
+        CPH.SetGlobalVar("vkvideolive_todays_viewers", new List<string>(), true);
         return true;
     }
 
@@ -55,11 +55,11 @@ public class CPHInline
         try
         {
             Service.ChangeRewardState(channelName, rewardId, rewardState, token);
-            CPH.LogInfo("[VkPlay reward manager] Reward with id " + rewardId + " enabled");
+            CPH.LogInfo("[VKVideoLive reward manager] Reward with id " + rewardId + " enabled");
         }
         catch (Exception e)
         {
-            Logger.Error("Error enabling reward with id " + rewardId, e.Message);
+            Logger.Error("[VKVideoLive reward manager] Error enabling reward with id " + rewardId, e.Message);
         }
 
         return true;
@@ -76,11 +76,11 @@ public class CPHInline
         try
         {
             Service.ChangeRewardState(channelName, rewardId, rewardState, token);
-            CPH.LogInfo("[VkPlay reward manager] Reward with id " + rewardId + " disabled");
+            CPH.LogInfo("[VKVideoLive reward manager] Reward with id " + rewardId + " disabled");
         }
         catch (Exception e)
         {
-            Logger.Error("Error disabling reward with id " + rewardId, e.Message);
+            Logger.Error("[VKVideoLive reward manager] Error disabling reward with id " + rewardId, e.Message);
         }
 
         return true;
@@ -101,7 +101,7 @@ public class CPHInline
         }
         catch (Exception e)
         {
-            Logger.Error("Error fetching viewers list", e.Message);
+            Logger.Error("[VKVideoLive get viewers] Error fetching viewers list", e.Message);
         }
 
         return true;
@@ -155,7 +155,7 @@ public class CPHInline
         }
         catch (Exception e)
         {
-            Logger.Error("Error fetching viewers count", e.Message);
+            Logger.Error("[VKVideoLive get viewers count] Error fetching viewers count", e.Message);
             return false;
         }
 
@@ -167,7 +167,7 @@ public class CPHInline
         if (!args.ContainsKey("channel_name"))
             return false;
         string channelName = args["channel_name"].ToString();
-        List<string> vkplay_todays_viewers = CPH.GetGlobalVar<List<string>>("vkplay_todays_viewers", true);
+        List<string> vkvideolive_todays_viewers = CPH.GetGlobalVar<List<string>>("vkvideolive_todays_viewers", true);
         try
         {
             CPH.LogInfo("Попытка получить нового зрителя на вкпл");
@@ -180,16 +180,16 @@ public class CPHInline
 
             for (int i = 0; i < viewers.Count; i++)
             {
-                if (!vkplay_todays_viewers.Contains(viewers[i].DisplayName))
+                if (!vkvideolive_todays_viewers.Contains(viewers[i].DisplayName))
                 {
-                    vkplay_todays_viewers.Add(viewers[i].DisplayName);
-                    CPH.SetGlobalVar("vkplay_todays_viewers", vkplay_todays_viewers, true);
-                    CPH.SetArgument("service", "VKPlay");
+                    vkvideolive_todays_viewers.Add(viewers[i].DisplayName);
+                    CPH.SetGlobalVar("vkvideolive_todays_viewers", vkvideolive_todays_viewers, true);
+                    CPH.SetArgument("service", "VKPlay"); //TODO поправить имя сервиса после его изменения в миничате.
                     CPH.SetArgument("title", "Новый зритель");
                     CPH.SetArgument("message", viewers[i].DisplayName);
                     CPH.ExecuteMethod("MiniChat Method Collection", "CreateCustomEvent");
                     CPH.LogInfo("Новый зритель: " + viewers[i].DisplayName);
-                    Thread.Sleep(200);
+                    Thread.Sleep(200); // Без задержки лента миничата пропускает часть событий.
                 }
             }
         }
@@ -203,9 +203,9 @@ public class CPHInline
 
     public bool AddFirstWordViewer()
     {
-        List<string> vkplay_todays_viewers = CPH.GetGlobalVar<List<string>>("vkplay_todays_viewers", true);
-        vkplay_todays_viewers.Add(args["userName"].ToString());
-        CPH.SetGlobalVar("vkplay_todays_viewers", vkplay_todays_viewers, true);
+        List<string> vkvideolive_todays_viewers = CPH.GetGlobalVar<List<string>>("vkvideolive_todays_viewers", true);
+        vkvideolive_todays_viewers.Add(args["userName"].ToString());
+        CPH.SetGlobalVar("vkvideolive_todays_viewers", vkvideolive_todays_viewers, true);
         return true;
     }
 
@@ -215,13 +215,13 @@ public class CPHInline
         string token = args["token"].ToString();
         var json = Service.GetAllStatistics(channelName, token);
         JObject parsedJson = JObject.Parse(json);
-        int totalAverageVkPlayLiveViewers = parsedJson["data"]["analytics"]["total"]["viewersAverage"].Value<int>();
-        CPH.SetArgument("totalAverageVkPlayLiveViewers", totalAverageVkPlayLiveViewers);
+        int totalAverageVKVideoLiveViewers = parsedJson["data"]["analytics"]["total"]["viewersAverage"].Value<int>();
+        CPH.SetArgument("totalAverageVKVideoLiveViewers", totalAverageVKVideoLiveViewers);
         return true;
     }
 }
 
-public class VKPlayApiService
+public class VKVideoLiveApiService
 {
     private HttpClient Client { get; set; }
     private Logger Logger { get; set; }
@@ -237,7 +237,7 @@ public class VKPlayApiService
     //    private const string EndpointGetSeasonChPRewardActivate = "cp_reward_activate/daily/";
     //    private const string EndpointGetSeasonLikes = "like/daily/";
     //    private const string EndpointGetSeasonTotalProfit= "total_profit/daily/";
-    public VKPlayApiService(HttpClient client, Logger logger)
+    public VKVideoLiveApiService(HttpClient client, Logger logger)
     {
         Client = client;
         Logger = logger;
