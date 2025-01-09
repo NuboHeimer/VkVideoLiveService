@@ -91,13 +91,16 @@ public class CPHInline
         if (!args.ContainsKey("channel_name"))
             return false;
         string channelName = args["channel_name"].ToString();
+        string vkVideoLiveViewers = "";
         try
         {
             var viewers = Service.GetViewers(channelName);
             for (int i = 0; i < viewers.Count; i++)
             {
+                vkVideoLiveViewers = vkVideoLiveViewers + viewers[i].DisplayName + ";";
                 CPH.SetArgument(string.Format("viewer{0}", i), viewers[i].DisplayName);
             }
+            CPH.SetArgument("vkVideoLiveViewers", vkVideoLiveViewers);
         }
         catch (Exception e)
         {
