@@ -12,7 +12,7 @@
 ///   Email:        nuboheimer@yandex.ru
 ///----------------------------------------------------------------------------
  
-///   Version:      3.0.0
+///   Version:      3.1.0
 using System;
 using System.Net;
 using System.Net.Http;
@@ -187,7 +187,7 @@ public class CPHInline
                 {
                     vkvideolive_todays_viewers.Add(viewers[i].DisplayName);
                     CPH.SetGlobalVar("vkvideolive_todays_viewers", vkvideolive_todays_viewers, true);
-                    CPH.SetArgument("service", "VKPlay"); //TODO поправить имя сервиса после его изменения в миничате.
+                    CPH.SetArgument("service", "VKVideoLive");
                     CPH.SetArgument("title", "Новый зритель");
                     CPH.SetArgument("message", viewers[i].DisplayName);
                     CPH.ExecuteMethod("MiniChat Method Collection", "CreateCustomEvent");
@@ -220,6 +220,37 @@ public class CPHInline
         JObject parsedJson = JObject.Parse(json);
         int totalAverageVKVideoLiveViewers = parsedJson["data"]["analytics"]["total"]["viewersAverage"].Value<int>();
         CPH.SetArgument("totalAverageVKVideoLiveViewers", totalAverageVKVideoLiveViewers);
+        return true;
+    }
+    public bool GetPresentViewersNameList()
+    {
+         if (!args.ContainsKey("channel_name"))
+            return false;
+
+        string channelName = args["channel_name"].ToString();
+        
+        try
+        {
+            CPH.LogInfo("[VKVideoiLiveService] try to get viewers");
+            var viewers = Service.GetViewers(channelName);
+            if (viewers.Count == 0)
+            {
+                CPH.LogInfo("Viewers not found");
+                return true;
+            }
+
+            List<string> lastVKVideoLiveViewersNameList = new List<string>();
+            for (int i = 0; i < viewers.Count; i++)
+            {
+                lastVKVideoLiveViewersNameList.Add(viewers[i].DisplayName);
+                CPH.SetGlobalVar("lastVKVideoLiveViewersNameList", lastVKVideoLiveViewersNameList, true);
+            }
+        }
+        catch (Exception e)
+        {
+            CPH.LogError("[VKVideoiLiveService] Some error was happend.");
+        }
+
         return true;
     }
 }
