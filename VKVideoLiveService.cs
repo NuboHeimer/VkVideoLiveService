@@ -31,10 +31,10 @@ public class CPHInline
     {
         Logger = new Logger(CPH, "-- VKVideoLive Service:");
         Service = new VKVideoLiveApiService(Client, Logger);
+
         if (CPH.GetGlobalVar<List<string>>("vkvideolive_todays_viewers", true) == null)
         {
             CPH.SetGlobalVar("vkvideolive_todays_viewers", new List<string>(), true);
-            CPH.LogInfo("Создана глобальная переменная vkvideolive_todays_viewers");
         }
     }
 
@@ -91,16 +91,24 @@ public class CPHInline
         if (!args.ContainsKey("channel_name"))
             return false;
         string channelName = args["channel_name"].ToString();
-        string vkVideoLiveViewers = "";
+        List<Dictionary<string, object>> listOfViewers = new List<Dictionary<string, object>>();
         try
         {
             var viewers = Service.GetViewers(channelName);
+
             for (int i = 0; i < viewers.Count; i++)
             {
-                vkVideoLiveViewers = vkVideoLiveViewers + viewers[i].DisplayName + ";";
                 CPH.SetArgument(string.Format("viewer{0}", i), viewers[i].DisplayName);
+
+                Dictionary<string, object> user = new Dictionary<string, object>
+                {
+                    { "userName", viewers[i].DisplayName },
+                    { "id", viewers[i].ID },
+                };
+                listOfViewers.Add(user);
             }
-            CPH.SetArgument("vkVideoLiveViewers", vkVideoLiveViewers);
+
+            CPH.SetArgument("users", listOfViewers);
         }
         catch (Exception e)
         {
@@ -220,37 +228,6 @@ public class CPHInline
         JObject parsedJson = JObject.Parse(json);
         int totalAverageVKVideoLiveViewers = parsedJson["data"]["analytics"]["total"]["viewersAverage"].Value<int>();
         CPH.SetArgument("totalAverageVKVideoLiveViewers", totalAverageVKVideoLiveViewers);
-        return true;
-    }
-    public bool GetPresentViewersNameList()
-    {
-         if (!args.ContainsKey("channel_name"))
-            return false;
-
-        string channelName = args["channel_name"].ToString();
-        
-        try
-        {
-            CPH.LogInfo("[VKVideoiLiveService] try to get viewers");
-            var viewers = Service.GetViewers(channelName);
-            if (viewers.Count == 0)
-            {
-                CPH.LogInfo("Viewers not found");
-                return true;
-            }
-
-            List<string> lastVKVideoLiveViewersNameList = new List<string>();
-            for (int i = 0; i < viewers.Count; i++)
-            {
-                lastVKVideoLiveViewersNameList.Add(viewers[i].DisplayName);
-                CPH.SetGlobalVar("lastVKVideoLiveViewersNameList", lastVKVideoLiveViewersNameList, true);
-            }
-        }
-        catch (Exception e)
-        {
-            CPH.LogError("[VKVideoiLiveService] Some error was happend.");
-        }
-
         return true;
     }
 }
