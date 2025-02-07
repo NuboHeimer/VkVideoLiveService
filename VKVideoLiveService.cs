@@ -12,7 +12,7 @@
 ///   Email:        nuboheimer@yandex.ru
 ///----------------------------------------------------------------------------
  
-///   Version:      3.1.0
+///   Version:      3.2.0
 using System;
 using System.Net;
 using System.Net.Http;
@@ -98,8 +98,6 @@ public class CPHInline
 
             for (int i = 0; i < viewers.Count; i++)
             {
-                CPH.SetArgument(string.Format("viewer{0}", i), viewers[i].DisplayName);
-
                 Dictionary<string, object> user = new Dictionary<string, object>
                 {
                     { "userName", viewers[i].DisplayName },
