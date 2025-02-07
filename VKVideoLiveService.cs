@@ -1,5 +1,6 @@
 ///----------------------------------------------------------------------------
 ///   Module:       VK Video Live Service
+///   Module:       VK Video Live Service
 ///   Author:       play_code (https://twitch.tv/play_code)
 ///   Refactored:   NuboHeimer (https://live.vkvideo.ru/nuboheimer)
 ///   Email:        info@play-code.live
@@ -12,7 +13,7 @@
 ///   Email:        nuboheimer@yandex.ru
 ///----------------------------------------------------------------------------
  
-///   Version:      3.0.0
+///   Version:      3.1.0
 using System;
 using System.Net;
 using System.Net.Http;
@@ -27,19 +28,21 @@ public class CPHInline
     private readonly HttpClient Client = new();
     private Logger Logger;
     private VKVideoLiveApiService Service;
+    private VKVideoLiveApiService Service;
     public void Init()
     {
         Logger = new Logger(CPH, "-- VKVideoLive Service:");
         Service = new VKVideoLiveApiService(Client, Logger);
+
         if (CPH.GetGlobalVar<List<string>>("vkvideolive_todays_viewers", true) == null)
         {
             CPH.SetGlobalVar("vkvideolive_todays_viewers", new List<string>(), true);
-            CPH.LogInfo("Создана глобальная переменная vkvideolive_todays_viewers");
         }
     }
 
     public bool ClearTodaysViewers()
     {
+        CPH.SetGlobalVar("vkvideolive_todays_viewers", new List<string>(), true);
         CPH.SetGlobalVar("vkvideolive_todays_viewers", new List<string>(), true);
         return true;
     }
@@ -56,9 +59,11 @@ public class CPHInline
         {
             Service.ChangeRewardState(channelName, rewardId, rewardState, token);
             CPH.LogInfo("[VKVideoLive reward manager] Reward with id " + rewardId + " enabled");
+            CPH.LogInfo("[VKVideoLive reward manager] Reward with id " + rewardId + " enabled");
         }
         catch (Exception e)
         {
+            Logger.Error("[VKVideoLive reward manager] Error enabling reward with id " + rewardId, e.Message);
             Logger.Error("[VKVideoLive reward manager] Error enabling reward with id " + rewardId, e.Message);
         }
 
@@ -77,9 +82,11 @@ public class CPHInline
         {
             Service.ChangeRewardState(channelName, rewardId, rewardState, token);
             CPH.LogInfo("[VKVideoLive reward manager] Reward with id " + rewardId + " disabled");
+            CPH.LogInfo("[VKVideoLive reward manager] Reward with id " + rewardId + " disabled");
         }
         catch (Exception e)
         {
+            Logger.Error("[VKVideoLive reward manager] Error disabling reward with id " + rewardId, e.Message);
             Logger.Error("[VKVideoLive reward manager] Error disabling reward with id " + rewardId, e.Message);
         }
 
@@ -91,16 +98,28 @@ public class CPHInline
         if (!args.ContainsKey("channel_name"))
             return false;
         string channelName = args["channel_name"].ToString();
+        List<Dictionary<string, object>> listOfViewers = new List<Dictionary<string, object>>();
         try
         {
             var viewers = Service.GetViewers(channelName);
+
             for (int i = 0; i < viewers.Count; i++)
             {
                 CPH.SetArgument(string.Format("viewer{0}", i), viewers[i].DisplayName);
+
+                Dictionary<string, object> user = new Dictionary<string, object>
+                {
+                    { "userName", viewers[i].DisplayName },
+                    { "id", viewers[i].ID },
+                };
+                listOfViewers.Add(user);
             }
+
+            CPH.SetArgument("users", listOfViewers);
         }
         catch (Exception e)
         {
+            Logger.Error("[VKVideoLive get viewers] Error fetching viewers list", e.Message);
             Logger.Error("[VKVideoLive get viewers] Error fetching viewers list", e.Message);
         }
 
@@ -156,6 +175,7 @@ public class CPHInline
         catch (Exception e)
         {
             Logger.Error("[VKVideoLive get viewers count] Error fetching viewers count", e.Message);
+            Logger.Error("[VKVideoLive get viewers count] Error fetching viewers count", e.Message);
             return false;
         }
 
@@ -167,6 +187,7 @@ public class CPHInline
         if (!args.ContainsKey("channel_name"))
             return false;
         string channelName = args["channel_name"].ToString();
+        List<string> vkvideolive_todays_viewers = CPH.GetGlobalVar<List<string>>("vkvideolive_todays_viewers", true);
         List<string> vkvideolive_todays_viewers = CPH.GetGlobalVar<List<string>>("vkvideolive_todays_viewers", true);
         try
         {
@@ -181,14 +202,16 @@ public class CPHInline
             for (int i = 0; i < viewers.Count; i++)
             {
                 if (!vkvideolive_todays_viewers.Contains(viewers[i].DisplayName))
+                if (!vkvideolive_todays_viewers.Contains(viewers[i].DisplayName))
                 {
                     vkvideolive_todays_viewers.Add(viewers[i].DisplayName);
                     CPH.SetGlobalVar("vkvideolive_todays_viewers", vkvideolive_todays_viewers, true);
-                    CPH.SetArgument("service", "VKPlay"); //TODO поправить имя сервиса после его изменения в миничате.
+                    CPH.SetArgument("service", "VKVideoLive");
                     CPH.SetArgument("title", "Новый зритель");
                     CPH.SetArgument("message", viewers[i].DisplayName);
                     CPH.ExecuteMethod("MiniChat Method Collection", "CreateCustomEvent");
                     CPH.LogInfo("Новый зритель: " + viewers[i].DisplayName);
+                    Thread.Sleep(200); // Без задержки лента миничата пропускает часть событий.
                     Thread.Sleep(200); // Без задержки лента миничата пропускает часть событий.
                 }
             }
@@ -206,6 +229,9 @@ public class CPHInline
         List<string> vkvideolive_todays_viewers = CPH.GetGlobalVar<List<string>>("vkvideolive_todays_viewers", true);
         vkvideolive_todays_viewers.Add(args["userName"].ToString());
         CPH.SetGlobalVar("vkvideolive_todays_viewers", vkvideolive_todays_viewers, true);
+        List<string> vkvideolive_todays_viewers = CPH.GetGlobalVar<List<string>>("vkvideolive_todays_viewers", true);
+        vkvideolive_todays_viewers.Add(args["userName"].ToString());
+        CPH.SetGlobalVar("vkvideolive_todays_viewers", vkvideolive_todays_viewers, true);
         return true;
     }
 
@@ -217,10 +243,13 @@ public class CPHInline
         JObject parsedJson = JObject.Parse(json);
         int totalAverageVKVideoLiveViewers = parsedJson["data"]["analytics"]["total"]["viewersAverage"].Value<int>();
         CPH.SetArgument("totalAverageVKVideoLiveViewers", totalAverageVKVideoLiveViewers);
+        int totalAverageVKVideoLiveViewers = parsedJson["data"]["analytics"]["total"]["viewersAverage"].Value<int>();
+        CPH.SetArgument("totalAverageVKVideoLiveViewers", totalAverageVKVideoLiveViewers);
         return true;
     }
 }
 
+public class VKVideoLiveApiService
 public class VKVideoLiveApiService
 {
     private HttpClient Client { get; set; }
@@ -237,6 +266,7 @@ public class VKVideoLiveApiService
     //    private const string EndpointGetSeasonChPRewardActivate = "cp_reward_activate/daily/";
     //    private const string EndpointGetSeasonLikes = "like/daily/";
     //    private const string EndpointGetSeasonTotalProfit= "total_profit/daily/";
+    public VKVideoLiveApiService(HttpClient client, Logger logger)
     public VKVideoLiveApiService(HttpClient client, Logger logger)
     {
         Client = client;
