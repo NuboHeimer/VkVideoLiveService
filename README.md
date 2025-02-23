@@ -24,7 +24,6 @@
   * *channelName* -- имя канала.
   * *token* -- ваш токен авторизации в Vk Video Live. Можно узнать через F12.
 
-
 По всем вопросам можете обращаться в [группу](https://t.me/nuboheimersb).
 
 ## License
