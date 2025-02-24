@@ -5,13 +5,13 @@
 ///   Email:        info@play-code.live
 ///   WebSite:		https://docs.play-code.ru/minichat
 ///----------------------------------------------------------------------------
- 
+
 ///----------------------------------------------------------------------------
 ///   Module:       GetNewViewers, RewardsManager, GetSeasonStatistics
 ///   Author:       NuboHeimer (https://live.vkvideo.ru/nuboheimer)
 ///   Email:        nuboheimer@yandex.ru
 ///----------------------------------------------------------------------------
- 
+
 ///   Version:      3.2.0
 using System;
 using System.Net;
@@ -33,9 +33,7 @@ public class CPHInline
         Service = new VKVideoLiveApiService(Client, Logger);
 
         if (CPH.GetGlobalVar<List<string>>("vkvideolive_todays_viewers", true) == null)
-        {
             CPH.SetGlobalVar("vkvideolive_todays_viewers", new List<string>(), true);
-        }
     }
 
     public bool ClearTodaysViewers()
@@ -48,10 +46,12 @@ public class CPHInline
     {
         if (!args.ContainsKey("channel_name"))
             return false;
+
         string channelName = args["channel_name"].ToString();
         string rewardId = args["rewardId"].ToString();
         string rewardState = "On";
         string token = args["token"].ToString();
+
         try
         {
             Service.ChangeRewardState(channelName, rewardId, rewardState, token);
@@ -69,10 +69,12 @@ public class CPHInline
     {
         if (!args.ContainsKey("channel_name"))
             return false;
+
         string channelName = args["channel_name"].ToString();
         string rewardId = args["rewardId"].ToString();
         string rewardState = "Off";
         string token = args["token"].ToString();
+
         try
         {
             Service.ChangeRewardState(channelName, rewardId, rewardState, token);
@@ -90,29 +92,29 @@ public class CPHInline
     {
         if (!args.ContainsKey("channel_name"))
             return false;
+
         string channelName = args["channel_name"].ToString();
         List<Dictionary<string, object>> listOfViewers = new List<Dictionary<string, object>>();
+
         try
         {
             var viewers = Service.GetViewers(channelName);
 
             for (int i = 0; i < viewers.Count; i++)
             {
-                Dictionary<string, object> user = new Dictionary<string, object>
-                {
+                Dictionary<string, object> user = new Dictionary<string, object> {
+
                     { "userName", viewers[i].DisplayName },
                     { "id", viewers[i].ID },
                 };
                 listOfViewers.Add(user);
             }
-
             CPH.SetArgument("users", listOfViewers);
         }
         catch (Exception e)
         {
             Logger.Error("[VKVideoLive get viewers] Error fetching viewers list", e.Message);
         }
-
         return true;
     }
 
@@ -120,11 +122,14 @@ public class CPHInline
     {
         if (!args.ContainsKey("channel_name"))
             return false;
+
         string channelName = args["channel_name"].ToString();
         string last_random_viewer = CPH.GetGlobalVar<String>("last_random_viewer", true);
+
         try
         {
             var viewers = Service.GetViewers(channelName);
+
             if (viewers.Count == 0)
             {
                 CPH.SetArgument("viewer", "");
@@ -133,6 +138,7 @@ public class CPHInline
 
             var rnd = new Random();
             var viewer = viewers[rnd.Next(viewers.Count)];
+
             if (viewers.Count > 1)
             {
                 while (viewer.DisplayName.Equals(last_random_viewer))
@@ -157,7 +163,9 @@ public class CPHInline
     {
         if (!args.ContainsKey("channel_name"))
             return false;
+
         string channelName = args["channel_name"].ToString();
+
         try
         {
             CPH.SetArgument("viewers_count", Service.GetViewersCount(channelName));
@@ -167,7 +175,6 @@ public class CPHInline
             Logger.Error("[VKVideoLive get viewers count] Error fetching viewers count", e.Message);
             return false;
         }
-
         return true;
     }
 
@@ -175,12 +182,15 @@ public class CPHInline
     {
         if (!args.ContainsKey("channel_name"))
             return false;
+
         string channelName = args["channel_name"].ToString();
         List<string> vkvideolive_todays_viewers = CPH.GetGlobalVar<List<string>>("vkvideolive_todays_viewers", true);
+
         try
         {
             CPH.LogInfo("Попытка получить нового зрителя на вкпл");
             var viewers = Service.GetViewers(channelName);
+
             if (viewers.Count == 0)
             {
                 CPH.LogInfo("Список зрителей пуст");
