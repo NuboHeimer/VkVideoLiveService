@@ -10,6 +10,7 @@
 ///   Module:       GetNewViewers, RewardsManager, GetSeasonStatistics
 ///   Author:       NuboHeimer (https://live.vkvideo.ru/nuboheimer)
 ///   Email:        nuboheimer@yandex.ru
+///   Help:         https://t.me/nuboheimersb/29
 ///----------------------------------------------------------------------------
 
 ///   Version:      3.2.0
